@@ -4,25 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-
-	// "os"
 	"path/filepath"
 	"strings"
 
 	"github.com/nsf/termbox-go"
 )
 
-type Link struct {
-	Nome string `json:"nome"`
-	Link string `json:"link"`
-}
-
-type LinksData struct {
-	Links []Link `json:"Links"`
-}
-
 func main() {
-	// Inicializa a termbox
+
 	err := termbox.Init()
 	if err != nil {
 		fmt.Println("Erro ao inicializar o termbox:", err)
@@ -83,6 +72,7 @@ func main() {
 					drawList(selectedIndex)
 				}
 			case termbox.KeyEnter:
+
 				selectedFile := jsonFiles[selectedIndex]
 				fmt.Printf("Você escolheu o arquivo: %s\n", selectedFile)
 
@@ -93,23 +83,52 @@ func main() {
 					return
 				}
 
-				var data LinksData
+				var data map[string]interface{}
 				err = json.Unmarshal(file, &data)
 				if err != nil {
 					fmt.Println("Erro ao decodificar o arquivo JSON:", err)
 					return
 				}
 
-				fmt.Println("Informações dos Links:")
-				for _, link := range data.Links {
-					fmt.Println("Nome:", link.Nome)
-					fmt.Println("Link:", link.Link)
-					fmt.Println("___________________________________")
-				}
+				fmt.Println("Conteúdo do arquivo JSON:")
+				printJSON(data, 0)
+
 				return
 			case termbox.KeyEsc:
 				return
 			}
+		case termbox.EventResize:
+
+		}
+	}
+}
+
+func printJSON(data interface{}, indent int) {
+	indentStr := strings.Repeat("  ", indent)
+	switch value := data.(type) {
+	case map[string]interface{}:
+		for k, v := range value {
+			fmt.Printf("%s\"%s\": ", indentStr, k)
+			printJSON(v, indent+1)
+			fmt.Println()
+		}
+	case []interface{}:
+		for i, v := range value {
+			fmt.Printf("%s[%d]:\n", indentStr, i)
+			printJSON(v, indent+1)
+			fmt.Println()
+		}
+	default:
+
+		switch v := value.(type) {
+		case string:
+			fmt.Printf("\"%s\"\n", v)
+		case float64:
+			fmt.Printf("%f\n", v)
+		case bool:
+			fmt.Printf("%t\n", v)
+		default:
+			fmt.Printf("%v\n", v)
 		}
 	}
 }
